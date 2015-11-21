@@ -50,8 +50,20 @@ int main(int argc, char *argv[]) {
 	while(1){	
 		/*COLLECTING USER INPUT*/
 		printf("Enter message: ");
-		char *buffer = malloc(sizeof(char)*MAX_INPUT);
-		fgets(buffer, MAX_INPUT, stdin);
+		char *buffer = malloc(sizeof(char)*(MAX_INPUT+1));
+		size_t size;
+		int input = getline(&buffer, &size, stdin);
+		if(input == -1){
+			printf("Error reading line.\n");
+			free(buffer);
+			size = 0;
+			continue;
+		}else if(input >= MAX_INPUT){
+			printf("Input too large! Shorten it!\n");
+			free(buffer);
+			size = 0;
+			continue;
+		}
 
 		/*ACTUALLY SENDING USER INPUT*/
 		n = write(sockfd, buffer, strlen(buffer));
@@ -61,7 +73,7 @@ int main(int argc, char *argv[]) {
 			exit(1);
 		}
 
-		if(strcmp(buffer, "EXIT\n") == 0){
+		if(strcmp(buffer, "exit\n") == 0){
 			printf("Exiting client.\n");
 			break;
 		}

@@ -9,11 +9,21 @@ static Node *account_list;
 Node * createAccount(char* name, float balance){
 	/*CREATING AN ACCOUNT*/
 	Account *acc = malloc(sizeof(Account));
+	if(acc == NULL){
+		printf("Not enough memory to create a new account.\n");
+		free(acc);
+		return NULL;
+	}
 	acc->name = name;
 	acc->balance = balance;
 
 	/*CREATING A NODE*/
 	Node *node = malloc(sizeof(Node));
+	if(node == NULL){
+		printf("Not enough memory to create a new node.\n");
+		free(node);
+		free(acc);
+	}
 	node->account = acc;
 	node->next = NULL;
 
