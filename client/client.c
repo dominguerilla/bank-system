@@ -41,26 +41,30 @@ int main(int argc, char *argv[]) {
 	bcopy((char*)server->h_addr, (char*)&serv_addr.sin_addr.s_addr, server->h_length);
 	serv_addr.sin_port = htons(portno);
 
-	/*CONNECTING TO THE SERVER*/
-	if(connect(sockfd, (struct sockaddr*) &serv_addr, sizeof(serv_addr))<0){
-		perror("Error connecting to server!\n");
-		exit(1);
+	/* CONNECTING TO THE SERVER
+	 * If unsuccessful, will wait 3 seconds and try again.
+	 *
+	 */
+	printf("Connecting to server...\n");
+	while(connect(sockfd, (struct sockaddr*) &serv_addr, sizeof(serv_addr))<0){
+		usleep(3000);
 	}
-
+	printf("Connected to server.\n");
+	
+	char *buffer = NULL;
 	while(1){	
 		/*COLLECTING USER INPUT*/
 		printf("Enter message: ");
-		char *buffer = malloc(sizeof(char)*(MAX_INPUT+1));
 		size_t size;
 		int input = getline(&buffer, &size, stdin);
 		if(input == -1){
 			printf("Error reading line.\n");
-			free(buffer);
+			memset(buffer, '\0', strlen(buffer));
 			size = 0;
 			continue;
 		}else if(input >= MAX_INPUT){
 			printf("Input too large! Shorten it!\n");
-			free(buffer);
+			memset(buffer, '\0', strlen(buffer));
 			size = 0;
 			continue;
 		}
@@ -77,9 +81,10 @@ int main(int argc, char *argv[]) {
 			printf("Exiting client.\n");
 			break;
 		}
-		free(buffer);
+		memset(buffer, '\0', strlen(buffer));
+		sleep(2);
 	}
-
+	free(buffer);
 	close(sockfd);
 
 	return 0;

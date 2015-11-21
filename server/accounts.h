@@ -15,8 +15,9 @@ typedef struct _node{
 
 /*FUNCTION PROTOTYPES*/
 Node * createAccount(char *, float);
-void addToList(Node *);
-void printList();
+void addToList(Node *, Node *);
+void openAccount(Node **, char *, float);
+void printList(Node *);
 void deleteAccount(Node *);
-void destroyList();
+void destroyList(Node *);
 #endif

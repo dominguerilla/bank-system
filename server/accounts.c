@@ -2,8 +2,6 @@
 #include <stdio.h>
 #include "accounts.h"
 
-/*GLOBAL STATIC ACCOUNT REPOSITORY*/
-static Node *account_list;
 
 /*RETURNS POINTER TO NEWLY CREATED ACCOUNT*/
 Node * createAccount(char* name, float balance){
@@ -30,12 +28,16 @@ Node * createAccount(char* name, float balance){
 	return node;
 }
 
-void addToList(Node *node){
-	if(account_list == NULL){
-		account_list = node;
+/*
+ * Adds a given node to the static account list.
+ *
+ */
+void addToList(Node *node, Node *list){
+	if(list == NULL){
+		list = node;
 		return;
 	}else{
-		Node *ptr = account_list;
+		Node *ptr = list;
 		while(ptr->next != NULL){
 			ptr = ptr->next;
 		}
@@ -44,12 +46,36 @@ void addToList(Node *node){
 	}
 }
 
-void printList(){
-	if(account_list == NULL){
-		printf("List is empty!\n");
+void openAccount(Node **head, char* name, float balance){
+	Node *ptr = *head;
+	if(*head == NULL){
+		(*head) = (Node*)malloc(sizeof(Node *));
+		(*head)->next = NULL;
+		(*head)->account = (Account*)malloc(sizeof(Account*));
+		(*head)->account->name = name;
+		(*head)->account->balance = balance;
+		return;
+	}
+	while(ptr->next != NULL){
+		ptr = ptr->next;
+	}
+	ptr->next = (Node*)malloc(sizeof(Node*));
+	ptr->next->next = NULL;
+	ptr->next->account = (Account*)malloc(sizeof(Account*));
+	ptr->next->account->name = name;
+	ptr->next->account->balance = balance;
+}
+
+/*
+ * Prints out the current list of accounts.
+ *
+ */
+void printList(Node *list){
+	if(list == NULL){
+		printf("No accounts created.\n");
 		return;
 	}else{
-		Node *ptr = account_list;
+		Node *ptr = list;
 		
 		/*THIS CONDITION STOPS IT AT LAST NODE*/
 		while(ptr->next != NULL){
@@ -60,6 +86,10 @@ void printList(){
 	}
 }
 
+/*
+ * Deletes an account given a node.
+ *
+ */
 void deleteAccount(Node * target){
 	if(target == NULL){
 		printf("deleteAccount(): Target account is null!\n");
@@ -70,17 +100,21 @@ void deleteAccount(Node * target){
 	free(target);
 }
 
-void destroyList(){
-	if(account_list == NULL){
+/*
+ * Deletes the entire list of accounts.
+ *
+ */
+void destroyList(Node *list){
+	if(list == NULL){
 		printf("Cannot delete empty account list.\n");
 		return;
 	}
-	Node *ptr = account_list;
+	Node *ptr = list;
 	do{
 		Node *next = ptr->next;
 		deleteAccount(ptr);
-		account_list = next;
-		ptr = account_list;
+		list = next;
+		ptr = list;
 	}while(ptr != NULL);
 	printf("All accounts deleted.\n");
 }
