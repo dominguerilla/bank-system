@@ -27,28 +27,59 @@ typedef struct{
 * of the client. 
 *
 * The 'state' is simply whether or not the client is in a session.
+* -1: Client wishes to exit
+*  0: Client is connected, but is not in an account session
+*  1: Client is connected and is in an account session
 *
 */
-int process_input(char *command, char *arg, Node **list){
+int process_input(char *buffer, int state){
 	
-	if(strcmp(command, "open") == 0){
-		openAccount(list, arg, 0.0);
-		/*
-		Node *new = malloc(sizeof(Node));
-		new = createAccount(arg, 0.0);
-		if(new != NULL){
-			addToList(new, list);
-			printf("Created account for %s.\n", new->account->name);
-		}else{
-			printf("Error making account.\n");
-		}*/
+	int i;
+	char *parsed = NULL;
+	int len = strlen(buffer);
+	for(i = 0; i < len; i++){
+		if(buffer[i] == '\n'){
+			if(i == 0){
+				/*In it's just a newline*/
+				break;
+			}
+			parsed = malloc(sizeof(char)*(i+1));
+			strncpy(parsed, buffer, i);
+			parsed[i] = '\0';
+			break;
+		}
 	}
-	return 0;
+	if(parsed == NULL){
+		printf("Error parsing buffer.\n");
+		return state;
+	}
+
+	printf("CLIENT> %s\n", parsed);
+	
+	if(strcmp(parsed, "exit") == 0){
+		printf("Client exits!\n");
+		return -1;
+	}
+
+
+
+
+	char *command, *arg;
+	command = strtok(parsed, " ");
+	arg = strtok(NULL, " ");
+
+	printf("Command: %s , Arg: %s\n", command, arg);
+	if(strcmp(command, "open") == 0){
+		/*openAccount(list, arg, 0.0);*/
+	}
+	free(parsed);
+
+	return state;
 }
 
 /**
  The entry function that new thread clients use. It reads from the socket, passes it
- to process_input, and will loop until the client sends 'exit\n'.
+ to process_input, and will loop until the client sends 'exit'.
 */
 void client_connect(void *client_ptr){
 
@@ -64,68 +95,17 @@ void client_connect(void *client_ptr){
 	
 	printf("Client connected.\n");
 	
-	char *buffer = malloc(sizeof(char)*(MAX_INPUT+1));
+	char buffer[MAX_INPUT+1];
+	int buffer_len = strlen(buffer);
+	int client_state = 0;
 	while(1){
 		read(client->sock, buffer, MAX_INPUT);
-		/*buffer[MAX_INPUT] = '\0';*/
 		
-		int i;
-		char *parsed = NULL;
-		for(i = 0; i < strlen(buffer); i++){
-			if(buffer[i] == '\n'){
-				if(i == 0){
-					printf("Please enter a command.\n");
-					break;
-				}
-				parsed = malloc(sizeof(char)*(i+1));
-				strncpy(parsed, buffer, i);
-				parsed[i] = '\0';
-				break;
-			}
-		}
-		if(parsed == NULL){
-			printf("Error parsing buffer.\n");
-			continue;
-		}
+		client_state = process_input(buffer, client_state);
 
-		printf("CLIENT> %s\n", parsed);
-		
-
-
-		if(strcmp(parsed, "exit") == 0){
-			printf("Client exits!\n");
-			break;
-		}else if(strcmp(parsed, "print") == 0){
-			printList(list);
-		}
-		
-		char *command, *arg;
-		arg = strtok(parsed, " ");
-		command = strcpy(arg, command);
-		arg = strtok(NULL, " ");
-
-		printf("Command: %s , Arg: %s\n", command, arg);
-
-
-		/*
-		char *arg;
-		if(sscanf(buffer, "%s %s ", command, arg) != 2){
-			printf("Proper syntax: [command] [argument]\n");
-			free(command);
-			free(arg);
-			memset(buffer, '\0', strlen(buffer));
-			continue;
-		}*/
-		/*command[MAX_COMMAND_LEN] = '\0';
-		arg[MAX_ARG_LEN] = '\0';*/
-
-		/*int processed_input = process_input(command, arg, *list);
-		free(command);
-		free(arg);*/
-		free(parsed);
-		memset(buffer, '\0', strlen(buffer));
+		memset(buffer, '\0', buffer_len);
+		if(client_state == -1) break;
 	}
-	free(buffer);
 	close(client->sock);
 	free(client);
 	sleep(1);
