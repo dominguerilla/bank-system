@@ -68,9 +68,13 @@ int main(int argc, char *argv[]) {
 			size = 0;
 			continue;
 		}
+		
+		char *msg = malloc(sizeof(char)*(input+1));
+		strcpy(msg, buffer);
+		msg[input] = '\0';
 
 		/*ACTUALLY SENDING USER INPUT*/
-		n = write(sockfd, buffer, strlen(buffer));
+		n = write(sockfd, msg, strlen(buffer));
 
 		if(n<0){
 			perror("Error writing to socket!\n");
@@ -82,6 +86,7 @@ int main(int argc, char *argv[]) {
 			break;
 		}
 		memset(buffer, '\0', strlen(buffer));
+		free(msg);
 		sleep(2);
 	}
 	free(buffer);

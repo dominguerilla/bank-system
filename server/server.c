@@ -50,49 +50,79 @@ int process_input(char *command, char *arg, Node **list){
  The entry function that new thread clients use. It reads from the socket, passes it
  to process_input, and will loop until the client sends 'exit\n'.
 */
-void client_connect(void *client_ptr, void **list_ptr){
+void client_connect(void *client_ptr){
 
 	client_t *client;
-	Node **list;
+	
+	Node *list = NULL;
 
 	if(!client_ptr){
 		pthread_exit(0);
 	}
 	
 	client = (client_t*) client_ptr;
-	list = (Node**) list_ptr;
+	
 	printf("Client connected.\n");
 	
 	char *buffer = malloc(sizeof(char)*(MAX_INPUT+1));
 	while(1){
 		read(client->sock, buffer, MAX_INPUT);
 		/*buffer[MAX_INPUT] = '\0';*/
-		printf("CLIENT> %s\n");
+		
+		int i;
+		char *parsed = NULL;
+		for(i = 0; i < strlen(buffer); i++){
+			if(buffer[i] == '\n'){
+				if(i == 0){
+					printf("Please enter a command.\n");
+					break;
+				}
+				parsed = malloc(sizeof(char)*(i+1));
+				strncpy(parsed, buffer, i);
+				parsed[i] = '\0';
+				break;
+			}
+		}
+		if(parsed == NULL){
+			printf("Error parsing buffer.\n");
+			continue;
+		}
+
+		printf("CLIENT> %s\n", parsed);
 		
 
-		if(strcmp(buffer, "exit\n") == 0){
+
+		if(strcmp(parsed, "exit") == 0){
 			printf("Client exits!\n");
 			break;
-		}else if(strcmp(buffer, "print\n") == 0){
-			printList(*list);
+		}else if(strcmp(parsed, "print") == 0){
+			printList(list);
 		}
 		
-		char *command = malloc(sizeof(char) * (MAX_COMMAND_LEN+1));
-		char *arg = malloc(sizeof(char) * (MAX_ARG_LEN+1));
-		
+		char *command, *arg;
+		arg = strtok(parsed, " ");
+		command = strcpy(arg, command);
+		arg = strtok(NULL, " ");
+
+		printf("Command: %s , Arg: %s\n", command, arg);
+
+
+		/*
+		char *arg;
 		if(sscanf(buffer, "%s %s ", command, arg) != 2){
 			printf("Proper syntax: [command] [argument]\n");
 			free(command);
 			free(arg);
 			memset(buffer, '\0', strlen(buffer));
 			continue;
-		}
+		}*/
 		/*command[MAX_COMMAND_LEN] = '\0';
 		arg[MAX_ARG_LEN] = '\0';*/
 
-		int processed_input = process_input(command, arg, list);
+		/*int processed_input = process_input(command, arg, *list);
 		free(command);
-		free(arg);
+		free(arg);*/
+		free(parsed);
 		memset(buffer, '\0', strlen(buffer));
 	}
 	free(buffer);
@@ -169,7 +199,7 @@ int main(int argc, char** argv){
 			printf("Error accepting client connection.\n");
 			free(client);
 		}else{
-			pthread_create(&thread, 0, (void*)(client_connect), (void*)client, (void*)list);
+			pthread_create(&thread, 0, (void*)(client_connect), (void*)client);
 			pthread_detach(thread);
 		}
 	}
