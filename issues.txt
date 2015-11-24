@@ -1,5 +1,0 @@
-There is a max client input size of 40 chars, which is checked in two ways:
-1. The client checks if the total size of getline() is >= 40
-2. The server, using sscanf, gets two strings from any input sent by client
-The issue is when the client's input has more than two 'tokens'--i.e. there is more than one space character in the input
-WORKAROUND: As the client, make sure your input has no more than one space character

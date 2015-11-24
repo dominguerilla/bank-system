@@ -40,7 +40,7 @@ int process_input(char *buffer, int state){
 	for(i = 0; i < len; i++){
 		if(buffer[i] == '\n'){
 			if(i == 0){
-				/*In it's just a newline*/
+				/*If it's just a newline*/
 				break;
 			}
 			parsed = malloc(sizeof(char)*(i+1));
@@ -71,7 +71,38 @@ int process_input(char *buffer, int state){
 	printf("Command: %s , Arg: %s\n", command, arg);
 	if(strcmp(command, "open") == 0){
 		/*openAccount(list, arg, 0.0);*/
+	}else if(strcmp(command, "start") == 0){
+		if(state == 0){
+			/*startAccount(list, arg);*/
+		}else{
+			printf("Still in session!\n");
+		}
+	}else if(strcmp(command, "credit") == 0){
+		if(state == 1){
+			/*creditAccount(account, amount);*/
+		}else{
+			printf("Not currently in session!\n");
+		}
+	}else if(strcmp(command, "debit") == 0){
+		if(state == 1){
+			/*debitAccount(account, amount);*/
+		}else{
+			printf("Not currently in session!\n");
+		}
+	}else if(strcmp(command, "balance") == 0){
+		if(state == 1){
+			/*printf(balance);*/
+		}else{
+			printf("Not currently in session!\n");
+		}
+	}else if(strcmp(command, "finish") == 0){
+		if(state == 1){
+			/*closeSession();*/
+		}else{
+			printf("Not currently in session!\n");
+		}
 	}
+	
 	free(parsed);
 
 	return state;

@@ -28,32 +28,23 @@ Node * createAccount(char* name, float balance){
 	return node;
 }
 
-/*
- * Adds a given node to the static account list.
+/**
+ * Opens a new account given a list, and a name
  *
  */
-void addToList(Node *node, Node *list){
-	if(list == NULL){
-		list = node;
-		return;
-	}else{
-		Node *ptr = list;
-		while(ptr->next != NULL){
-			ptr = ptr->next;
-		}
-		ptr->next = node;
+void openAccount(Node **head, char* name){
+	Node *ptr = *head;
+	if(strlen(name) >100){
+		printf("The given name %s is too long!\n", name);
 		return;
 	}
-}
-
-void openAccount(Node **head, char* name, float balance){
-	Node *ptr = *head;
 	if(*head == NULL){
 		(*head) = (Node*)malloc(sizeof(Node *));
 		(*head)->next = NULL;
 		(*head)->account = (Account*)malloc(sizeof(Account*));
 		(*head)->account->name = name;
 		(*head)->account->balance = balance;
+		(*head)->account->in_session = '0';
 		return;
 	}
 	while(ptr->next != NULL){

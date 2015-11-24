@@ -74,6 +74,7 @@ int main(int argc, char *argv[]) {
 		msg[input] = '\0';
 
 		/*ACTUALLY SENDING USER INPUT*/
+		sleep(2);
 		n = write(sockfd, msg, strlen(buffer));
 
 		if(n<0){
@@ -87,7 +88,6 @@ int main(int argc, char *argv[]) {
 		}
 		memset(buffer, '\0', strlen(buffer));
 		free(msg);
-		sleep(2);
 	}
 	free(buffer);
 	close(sockfd);
