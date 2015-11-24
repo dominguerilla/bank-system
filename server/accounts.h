@@ -15,8 +15,11 @@ typedef struct _node{
 
 /*FUNCTION PROTOTYPES*/
 Node * createAccount(char *, float);
-void openAccount(Node **, char *, float);
+Node * findAccount(char *, Node *);
+void openAccount(Node **, char *);
+int updateAccount(char*, Node **, float);
+float getBalance(char*, Node*);
 void printList(Node *);
 void deleteAccount(Node *);
-void destroyList(Node *);
+void destroyList(Node **);
 #endif
