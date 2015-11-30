@@ -20,6 +20,7 @@ typedef struct{
 	int sock;
 	struct sockaddr address;
 	int cli_len;
+	Node *head;
 } client_t;
 
 /**
@@ -32,7 +33,7 @@ typedef struct{
 *  1: Client is connected and is in an account session
 *
 */
-int process_input(char *buffer, int state){
+int process_input(char *buffer, int state, Node* list){
 	
 	int i;
 	char *parsed = NULL;
@@ -68,38 +69,72 @@ int process_input(char *buffer, int state){
 	command = strtok(parsed, " ");
 	arg = strtok(NULL, " ");
 
-	printf("Command: %s , Arg: %s\n", command, arg);
+	printf("Command: %s, Arg: %s\n", command, arg);
 	if(strcmp(command, "open") == 0){
-		/*openAccount(list, arg, 0.0);*/
+		if(state == 1){
+			printf("Still in customer session!\n");
+			free(parsed);
+			return 1;
+		}
+		openAccount(&list, arg);
+		free(parsed);
+		return 0;
 	}else if(strcmp(command, "start") == 0){
 		if(state == 0){
-			/*startAccount(list, arg);*/
+			Node *ptr = findAccount(arg, list);
+			if(ptr == NULL){
+				free(parsed);
+				return 0;
+			}
+			Account *acc = ptr->account;
+			startAccount(&acc, &list);
+			free(parsed);
+			return 1;
 		}else{
 			printf("Still in session!\n");
+			free(parsed);
+			return 1;
 		}
 	}else if(strcmp(command, "credit") == 0){
 		if(state == 1){
-			/*creditAccount(account, amount);*/
+			updateAccount(arg, &list, atof(arg));
+			free(parsed);
+			return 1;
 		}else{
 			printf("Not currently in session!\n");
+			free(parsed);
+			return 0;
 		}
 	}else if(strcmp(command, "debit") == 0){
 		if(state == 1){
-			/*debitAccount(account, amount);*/
+			updateAccount(arg, &list, atof(arg) * -1.0);
+			free(parsed);
+			return 1;
 		}else{
 			printf("Not currently in session!\n");
+			free(parsed);
+			return 0;
 		}
 	}else if(strcmp(command, "balance") == 0){
 		if(state == 1){
-			/*printf(balance);*/
+			float b = getBalance(arg, list);
+			printf("Balance: %f\n", b);
+			free(parsed);
+			return 1;
 		}else{
 			printf("Not currently in session!\n");
+			free(parsed);
+			return 0;
 		}
 	}else if(strcmp(command, "finish") == 0){
 		if(state == 1){
-			/*closeSession();*/
+			printf("Finishing customer session.\n");
+			free(parsed);
+			return 0;
 		}else{
 			printf("Not currently in session!\n");
+			free(parsed);
+			return 0;
 		}
 	}
 	
@@ -132,7 +167,7 @@ void client_connect(void *client_ptr){
 	while(1){
 		read(client->sock, buffer, MAX_INPUT);
 		
-		client_state = process_input(buffer, client_state);
+		client_state = process_input(buffer, client_state, client->head);
 
 		memset(buffer, '\0', buffer_len);
 		if(client_state == -1) break;
@@ -160,7 +195,7 @@ void print_accounts(){
  One thread per client connection.
 */
 int main(int argc, char** argv){
-	Node **list = NULL;
+	Node *list = NULL;
 	int servsockfd, port;
 	struct sockaddr_in address;
 	pthread_t thread;
@@ -210,6 +245,7 @@ int main(int argc, char** argv){
 			printf("Error accepting client connection.\n");
 			free(client);
 		}else{
+			client->head = list;
 			pthread_create(&thread, 0, (void*)(client_connect), (void*)client);
 			pthread_detach(thread);
 		}

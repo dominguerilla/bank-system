@@ -45,6 +45,35 @@ Node * findAccount(char* name, Node* list){
 }
 
 /**
+* Starts the account session for a given account.
+*/
+int startAccount(Account **acc, Node **head){
+	if(acc == NULL){
+		printf("NULL account.\n");
+		return 0;
+	}
+	(*acc)->in_session = '1';
+	printf("Account session for %s started.\n", (*acc)->name);
+	return 1;
+}
+
+/**
+* Finishes the account session.
+* The return value is meant to set the state.
+*/
+int finishAccount(Account **acc, int state){
+	if(state == 0){
+		printf("Currently not in session!\n");
+		return 0;
+	}
+	if(acc == NULL){
+		printf("NULL account.\n");
+		return state;
+	}
+	(*acc)->in_session = '0';
+	return 0;
+}
+/**
  * Opens a new account given a list and a name
  *
  */
@@ -55,12 +84,13 @@ void openAccount(Node **head, char* name){
 		return;
 	}
 	if(*head == NULL){
-		(*head) = (Node*)malloc(sizeof(Node *));
+		*head = (Node*)malloc(sizeof(Node *));
 		(*head)->next = NULL;
 		(*head)->account = (Account*)malloc(sizeof(Account*));
 		(*head)->account->name = name;
 		(*head)->account->balance = 0.0;
 		(*head)->account->in_session = '0';
+		printf("New account created under %s.\n", (*head)->account->name);
 		return;
 	}
 	while(ptr->next != NULL){
@@ -71,6 +101,7 @@ void openAccount(Node **head, char* name){
 	ptr->next->account = (Account*)malloc(sizeof(Account*));
 	ptr->next->account->name = name;
 	ptr->next->account->balance = 0.0;
+	printf("New account created under %s.\n", ptr->next->account->name);
 }
 
 /**

@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
 	 */
 	printf("Connecting to server...\n");
 	while(connect(sockfd, (struct sockaddr*) &serv_addr, sizeof(serv_addr))<0){
-		usleep(3000);
+		sleep(3);
 	}
 	printf("Connected to server.\n");
 	
@@ -93,4 +93,3 @@ int main(int argc, char *argv[]) {
 	close(sockfd);
 
 	return 0;
-}

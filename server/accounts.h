@@ -16,6 +16,8 @@ typedef struct _node{
 /*FUNCTION PROTOTYPES*/
 Node * createAccount(char *, float);
 Node * findAccount(char *, Node *);
+int startAccount(Account **, Node**);
+int finishAccount(Account **, int);
 void openAccount(Node **, char *);
 int updateAccount(char*, Node **, float);
 float getBalance(char*, Node*);
