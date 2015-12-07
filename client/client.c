@@ -49,7 +49,20 @@ int main(int argc, char *argv[]) {
 	while(connect(sockfd, (struct sockaddr*) &serv_addr, sizeof(serv_addr))<0){
 		sleep(3);
 	}
-	printf("Connected to server.\n");
+
+	/**
+	* CHECKING CONNECTION SUCCESS MESSAGE
+	*/
+
+	int *result;
+	read(sockfd, result, sizeof(int));
+	if(*result == -1){
+		printf("Server currently at max capacity!");
+		close(sockfd);
+		exit(1);
+	}else{
+		printf("Connected to server.\n");
+	}
 	
 	char *buffer = NULL;
 	while(1){	
@@ -93,3 +106,4 @@ int main(int argc, char *argv[]) {
 	close(sockfd);
 
 	return 0;
+}
