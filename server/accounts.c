@@ -1,60 +1,125 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#include <pthread.h>
 #include "accounts.h"
 
 
-/*RETURNS POINTER TO NEWLY CREATED ACCOUNT*/
-Node * createAccount(char* name, float balance){
-	/*CREATING AN ACCOUNT*/
-	Account *acc = malloc(sizeof(Account));
-	if(acc == NULL){
-		printf("Not enough memory to create a new account.\n");
-		free(acc);
-		return NULL;
+/**
+* Attempts to find an account under the given name in the given list.
+* Returns the node of the account if present; otherwise, returns NULL.
+*/
+Node * findAccount(char* name, Node* list){
+	Node *ptr = list;
+	while(ptr != NULL){
+		if(strcmp(ptr->account->name, name) == 0){
+			return ptr;
+		}
+		ptr = ptr->next;
 	}
-	acc->name = name;
-	acc->balance = balance;
-
-	/*CREATING A NODE*/
-	Node *node = malloc(sizeof(Node));
-	if(node == NULL){
-		printf("Not enough memory to create a new node.\n");
-		free(node);
-		free(acc);
-	}
-	node->account = acc;
-	node->next = NULL;
-
-	return node;
+	printf("Account under %s not found.\n", name);
+	return NULL;
 }
 
 /**
- * Opens a new account given a list, and a name
+* Starts the account session for a given account.
+*/
+int startAccount(Account **acc, Node **head){
+	/*pthread_mutex_lock(&((*acc)->lock));*/
+	if(acc == NULL){
+		printf("NULL account.\n");
+		return -1;
+	}else if((*acc)->in_session == '1'){
+		printf("Already in session!");
+		return 0;
+	}
+	(*acc)->in_session = '1';
+	printf("Account session for %s started.\n", (*acc)->name);
+	/*pthread_mutex_unlock(&((*acc)->lock));*/
+	return 1;
+}
+
+/**
+* Finishes the account session.
+* The return value is meant to set the state.
+*/
+int finishAccount(Account **acc, int state){
+	/*pthread_mutex_lock(&((*acc)->lock));*/
+	if(state == 0){
+		printf("Currently not in session!\n");
+		return 0;
+	}
+	if(acc == NULL){
+		printf("NULL account.\n");
+		return state;
+	}
+	(*acc)->in_session = '0';
+	/*pthread_mutex_unlock(&((*acc)->lock));*/
+	return 0;
+}
+/**
+ * Opens a new account given a list and a name
  *
  */
-void openAccount(Node **head, char* name){
+int openAccount(Node **head, char* name){
 	Node *ptr = *head;
 	if(strlen(name) >100){
 		printf("The given name %s is too long!\n", name);
-		return;
+		return -1;
 	}
 	if(*head == NULL){
-		(*head) = (Node*)malloc(sizeof(Node *));
+		*head = (Node*)malloc(sizeof(Node *));
 		(*head)->next = NULL;
 		(*head)->account = (Account*)malloc(sizeof(Account*));
-		(*head)->account->name = name;
-		(*head)->account->balance = balance;
+		char* nomen = malloc(sizeof(char)*strlen(name));
+		strcpy(nomen, name);
+		/*pthread_mutex_init(&((*head)->account->lock), NULL);*/
+		(*head)->account->name = nomen;
+		(*head)->account->balance = 0.0;
 		(*head)->account->in_session = '0';
-		return;
+		printf("New account created under %s.\n", (*head)->account->name);
+		
+		return 1;
 	}
 	while(ptr->next != NULL){
 		ptr = ptr->next;
 	}
-	ptr->next = (Node*)malloc(sizeof(Node*));
-	ptr->next->next = NULL;
-	ptr->next->account = (Account*)malloc(sizeof(Account*));
-	ptr->next->account->name = name;
-	ptr->next->account->balance = balance;
+	Node *new = malloc(sizeof(Node*));
+	new->next = NULL;
+	new->account = malloc(sizeof(Account*));
+	char *nomen  = malloc(sizeof(char)*strlen(name));
+	strcpy(nomen, name);
+	/*pthread_mutex_init(&(new->account->lock), NULL);*/
+	new->account->name = nomen;
+	new->account->balance = 0.0;
+	ptr->next = new;
+	return 1;
+}
+
+/**
+* Returns the balance of a given account in a given list.
+* If the account doesn't exist, returns 0.0 by default.
+*/
+
+float getBalance(char *name, Node *list){
+	Node *ptr = findAccount(name, list);
+	if(ptr == NULL) return 0.0;
+	float balance = ptr->account->balance;
+	return balance;
+}
+/**
+* Credits/debits the account under a given name, from a given list, by a given amount.
+* Returns the balance..
+*/
+float updateAccount(char* name, Node **list, float amount){
+	Node *target_ptr = findAccount(name, *list);
+	if(target_ptr == NULL) return -1;
+	
+	/*pthread_mutex_lock(&(target_ptr->account->lock));*/
+	Node **target = &target_ptr;
+	(*target)->account->balance += amount;
+	/*pthread_mutex_unlock(&(target_ptr->account->lock));*/
+	return (*target)->account->balance;
 }
 
 /*
@@ -69,11 +134,19 @@ void printList(Node *list){
 		Node *ptr = list;
 		
 		/*THIS CONDITION STOPS IT AT LAST NODE*/
-		while(ptr->next != NULL){
-			printf("%s, with $%f\n", ptr->account->name, ptr->account->balance);
+		while(ptr != NULL){
+			if(strlen(ptr->account->name) == 0){
+				ptr = ptr->next;
+				continue;
+			}
+			printf("%s, with $%.2f", ptr->account->name, ptr->account->balance);
+			if(ptr->account->in_session == '1'){
+				printf(" <- IN SESSION\n");
+			}else{
+				printf("\n");
+			}
 			ptr = ptr->next;
 		}
-		printf("%s, with $%f\n", ptr->account->name, ptr->account->balance);
 	}
 }
 
@@ -95,17 +168,17 @@ void deleteAccount(Node * target){
  * Deletes the entire list of accounts.
  *
  */
-void destroyList(Node *list){
-	if(list == NULL){
+void destroyList(Node **list){
+	if(*list == NULL){
 		printf("Cannot delete empty account list.\n");
 		return;
 	}
-	Node *ptr = list;
+	Node *ptr = *list;
 	do{
 		Node *next = ptr->next;
 		deleteAccount(ptr);
-		list = next;
-		ptr = list;
+		*list = next;
+		ptr = *list;
 	}while(ptr != NULL);
 	printf("All accounts deleted.\n");
 }
